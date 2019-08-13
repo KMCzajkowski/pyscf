@@ -459,7 +459,7 @@ class nao():
     if not np.allclose(self.nelec, nelec_occ, atol=1e-4):
       fermi_guess = fermi_energy(self.wfsx.ksn2e, self.hsx.nelec, self.hsx.telec)
       np.set_printoptions(precision=2, linewidth=1000)
-      raise RuntimeWarning(
+      print(
       '''occupations?\n mo_occ: \n{}\n telec: {}\n nelec expected: {}
  nelec(occ): {}\n Fermi guess: {}\n Fermi: {}\n E_n:\n{}'''.format(self.mo_occ,
  self.telec, self.nelec, nelec_occ, fermi_guess, self.fermi_energy, self.mo_energy))
