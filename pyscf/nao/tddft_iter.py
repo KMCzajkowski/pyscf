@@ -212,6 +212,22 @@ class tddft_iter(chi0_matvec):
 
     return pxx
 
+  def comp_polariz_inter_xx_atom_split(self, comegas):
+    """  Compute the interacting polarizability along the xx direction split into contributions from individual atoms."""
+    aw2pxx = np.zeros((self.natoms, comegas.shape[0]), dtype=self.dtypeComplex)
+
+    vext = np.transpose(self.moms1)
+    nww, eV = len(comegas), 27.2114
+    for iw, comega in enumerate(comegas):
+      if self.verbosity>0: print(iw, nww, comega.real*HARTREE2EV)
+      veff = self.comp_veff(vext[0], comega)
+      dn = self.apply_rf0(veff, comega)
+      for ia in range(self.natoms):
+          dn_atom = np.zeros(self.nprod, dtype=complex)
+          dn_atom[self.pb.c2s[ia]:self.pb.c2s[ia+1]] = dn[self.pb.c2s[ia]:self.pb.c2s[ia+1]]
+          aw2pxx[ia, iw] = np.dot(dn_atom, vext[0])
+    return aw2pxx
+
   def comp_polariz_inter_ave(self, comegas, tmp_fname=None, **kw):
     """  Compute average interacting polarizability  """
     
