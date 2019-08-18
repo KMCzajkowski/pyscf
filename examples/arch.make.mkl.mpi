@@ -39,7 +39,7 @@ LDFLAGS =
 
 COMP_LIBS = #libsiestaLAPACK.a libsiestaBLAS.a
 
-LIBS = -L${MKLROOT}/lib -lmkl_gf_lp64 -lmkl_core -lmkl_gnu_thread -lpthread -lm -ldl
+LIBS = -Wl,--no-as-needed -L${MKLROOT}/lib -lmkl_gf_lp64 -lmkl_core -lmkl_gnu_thread -lpthread -lm -ldl
 
 MPI_INTERFACE=libmpi_f90.a
 MPI_INCLUDE=.
