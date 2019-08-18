@@ -23,7 +23,7 @@ FPP =
 FC=mpif90
 FC_SERIAL = gfortran
 
-FFLAGS=-g -O2
+FFLAGS= -fopenmp -O2 -fPIC -ftree-vectorize
 FPPFLAGS= -DMPI -DFC_HAVE_FLUSH -DFC_HAVE_ABORT -DGRID_DP -DPHI_GRID_SP
 
 AR = ar
@@ -39,7 +39,7 @@ LDFLAGS =
 
 COMP_LIBS = #libsiestaLAPACK.a libsiestaBLAS.a
 
-LIBS = -Wl,--no-as-needed -L${MKLROOT}/lib -lmkl_gf_lp64 -lmkl_core -lmkl_gnu_thread -lpthread -lm -ldl
+LIBS = -fopenmp -Wl,--no-as-needed -L${MKLROOT}/lib -lmkl_gf_lp64 -lmkl_core -lmkl_gnu_thread -lpthread -lm -ldl
 
 MPI_INTERFACE=libmpi_f90.a
 MPI_INCLUDE=.
