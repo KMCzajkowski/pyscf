@@ -343,3 +343,89 @@ class tddft_iter(chi0_matvec):
                 self.dn[xyz, iw, :] = self.apply_rf0(veff, comega)
         
         self.p_mat = np.einsum("jp,iwp->ijw", vext, self.dn)
+
+  def comp_all_inter_along_Eext(self, comegas, Eext=np.array([1.0,0.0,0.0]),tmp_fname=None):
+    """ 
+        Compute a the average interacting polarizability along the Eext direction
+        for the frequencies comegas.
+        
+        Input Parameters:
+            comegas (1D array, complex): the real part contains the frequencies at which the polarizability
+                        should be computed. The imaginary part id the width of the polarizability define as self.eps
+            Eext (1D xyz array, real): direction of the external field
+            maxiter (integer): max number of iteration before to exit iteration loop in GMRES
+        
+        Other Calculated quantity:
+            self.p_mat (complex array, dim: [3, 3, comega.size]): store the (3, 3) polarizability matrix 
+                                [[Pxx, Pxy, Pxz],
+                                 [Pyx, Pyy, Pyz],
+                                 [Pzx, Pzy, Pzz]] for each frequency.
+            self.dn (complex array, dim: [3, comegas.size, self.nprod]): store the density change
+    """
+
+    if tmp_fname is not None:
+        if not isinstance(tmp_fname, str):
+            raise ValueError("tmp_fname must be a string")
+        else:
+            tmp_re = open(tmp_fname+".real", "a")
+            tmp_re.write("# All atomic units\n")
+            tmp_re.write("# w (Ha)    Pxx    Pxy    Pxz    Pyx    Pyy    Pyz    Pzx    Pzy    Pzz\n")
+            
+            tmp_im = open(tmp_fname+".imag", "a")
+            tmp_im.write("# All atomic units\n")
+            tmp_im.write("# w    Pxx    Pxy    Pxz    Pyx    Pyy    Pyz    Pzx    Pzy    Pzz\n")
+
+   
+    assert Eext.size == 3
+    self.p_mat = np.zeros((3, 3, comegas.size), dtype=self.dtypeComplex)
+    self.dn = np.zeros((3, comegas.size, self.nprod), dtype=self.dtypeComplex)
+    self.veff = np.zeros((3, comegas.size, self.nprod), dtype=self.dtypeComplex)
+    Edir = Eext/np.dot(Eext, Eext)
+    
+    vext = np.transpose(self.moms1)
+    nww, eV = len(comegas), 27.211386024367243
+    
+    if tmp_fname is not None:
+        for iw,comega in enumerate(comegas):
+            for xyz, Exyz in enumerate(Edir):
+                if Exyz == 0.0: continue
+                
+                if self.verbosity>0: 
+                    print("dir: {0}, w: {1}/{2}: ".format(xyz, iw, nww), comega*eV)
+                veff = self.comp_veff(vext[xyz], comega)
+                self.veff[xyz, iw, :] = veff
+                self.dn[xyz, iw, :] = self.apply_rf0(veff, comega)
+            
+                for xyzp, Exyzp in enumerate(Edir):
+                    self.p_mat[xyz, xyzp, iw] = np.dot(vext[xyzp], self.dn[xyz, iw, :])
+                
+            tmp_re = open(tmp_fname+".real", "a")
+            tmp_re.write("{0}   ".format(comega.real))
+
+            tmp_im = open(tmp_fname+".imag", "a")
+            tmp_im.write("{0}   ".format(comega.real))
+            
+            for i in range(3):
+                for j in range(3):
+                    tmp_re.write("{0}    ".format(self.p_mat[i, j, iw].real))
+                    tmp_im.write("{0}    ".format(self.p_mat[i, j, iw].imag))
+            tmp_re.write("\n")
+            tmp_im.write("\n")
+            tmp_re.close()  # Need to open and close the file at every freq, otherwise
+                            # tmp is written only at the end of the calculations, therefore,
+                            # it is useless
+            tmp_im.close()  
+
+    else:
+        for xyz, Exyz in enumerate(Edir):
+            if Exyz == 0.0: continue
+
+            for iw,comega in enumerate(comegas):
+                print(xyz, iw)
+                if self.verbosity>0: 
+                    print("dir: {0}/3, w: {1}/{2}: ".format(xyz, iw, nww), comega*eV)
+                veff = self.comp_veff(vext[xyz], comega)
+                self.veff[xyz, iw, :] = veff
+                self.dn[xyz, iw, :] = self.apply_rf0(veff, comega)
+        
+        self.p_mat = np.einsum("jp,iwp->ijw", vext, self.dn)
